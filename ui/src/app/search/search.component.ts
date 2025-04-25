@@ -1,13 +1,17 @@
-import {
-  Component,
-  inject,
-  signal,
-} from '@angular/core';
+import { ChangeDetectorRef, Component, inject } from '@angular/core';
 import { FormBuilder, FormControl, ReactiveFormsModule } from '@angular/forms';
-import { debounceTime, map, mergeMap, Observable, tap } from 'rxjs';
-import { Article, QueryService, Result } from './query.service';
+import {
+  debounceTime,
+  delay,
+  filter,
+  map,
+  mergeMap,
+  Observable,
+  switchMap,
+  tap,
+} from 'rxjs';
+import { GeneratedResponse, QueryService, Result } from './query.service';
 import { AsyncPipe, CommonModule } from '@angular/common';
-import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-search',
@@ -27,26 +31,41 @@ export class SearchComponent {
 
   queryService = inject(QueryService);
   menuOpen = false;
-  loading = signal(false);
+  loading = false;
+  submitted = false;
+  private changeDeterctorRef = inject(ChangeDetectorRef);
 
   results$: Observable<Result[]> = this.formGroup.valueChanges.pipe(
+    tap(() => {
+      console.log('change');
+      this.loading = true;
+      this.submitted = false;
+      this.response$ = undefined;
+    }),
     debounceTime(300),
-    tap(() => this.loading.set(true)),
     map((value) => value.search),
-    mergeMap((result) => this.queryService.query()),
-    tap(() => this.loading.set(false)),
-    tap(() => this.menuOpen = true),
+    switchMap((text) => this.queryService.autocomplete(text ?? '')),
+    tap(() => {
+      this.menuOpen = true;
+      this.loading = false;
+    }),
   );
 
-  article$: Observable<Article[]> = this.formGroup.valueChanges.pipe(
-    debounceTime(300),
-    tap(() => this.loading.set(true)),
-    map((value) => value.search),
-    mergeMap((result) => this.queryService.getArticles()),
-    tap(() => this.loading.set(false)),
-  );
+  response$: Observable<GeneratedResponse> | undefined;
 
   onSubmit() {
     console.log(this.formGroup.value);
+    this.submitted = true;
+    this.loading = true;
+    if (this.formGroup.value.search) {
+      this.response$ = this.queryService
+        .query(this.formGroup.value.search)
+        .pipe(
+          tap(() => {
+            this.menuOpen = true;
+            this.loading = false;
+          }),
+        );
+    }
   }
 }

@@ -1,0 +1,6 @@
+{
+  "/api/**": {
+    "target": "https://d32uhi6ehwe1r8.cloudfront.net",
+    "secure": false
+  }
+}
