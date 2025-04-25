@@ -1,0 +1,26 @@
+<form [formGroup]="formGroup">
+  <div [class]="'lex-input-group'">
+    <input
+      #input
+      class="search-input"
+      [placeholder]="''"
+      [attr.type]="'text'"
+      formControlName="search"
+      title
+    />
+  </div>
+</form>
+
+@let results = results$ | async;
+
+@if (results && !loading()) {
+  <div class="dropdown-results">
+    @for (result of results; track result.title) {
+      <button class="search-result" (click)="goToResults()">{{ result.title }}</button>
+    }
+  </div>
+} @else if (loading()) {
+  <p>Loading...</p>
+} @else {
+  <p>Error</p>
+}
