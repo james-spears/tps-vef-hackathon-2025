@@ -5,7 +5,7 @@ import {
 } from '@angular/core';
 import { FormBuilder, FormControl, ReactiveFormsModule } from '@angular/forms';
 import { debounceTime, map, mergeMap, Observable, tap } from 'rxjs';
-import { QueryService, Result } from './query.service';
+import { Article, QueryService, Result } from './query.service';
 import { AsyncPipe, CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 
@@ -17,7 +17,7 @@ import { Router } from '@angular/router';
   styleUrl: './search.component.scss',
 })
 export class SearchComponent {
-  constructor(private router: Router) {}
+  constructor() {}
   formBuilder = inject(FormBuilder);
   formControl = new FormControl('');
 
@@ -26,7 +26,7 @@ export class SearchComponent {
   });
 
   queryService = inject(QueryService);
-
+  menuOpen = false;
   loading = signal(false);
 
   results$: Observable<Result[]> = this.formGroup.valueChanges.pipe(
@@ -35,13 +35,18 @@ export class SearchComponent {
     map((value) => value.search),
     mergeMap((result) => this.queryService.query()),
     tap(() => this.loading.set(false)),
+    tap(() => this.menuOpen = true),
+  );
+
+  article$: Observable<Article[]> = this.formGroup.valueChanges.pipe(
+    debounceTime(300),
+    tap(() => this.loading.set(true)),
+    map((value) => value.search),
+    mergeMap((result) => this.queryService.getArticles()),
+    tap(() => this.loading.set(false)),
   );
 
   onSubmit() {
     console.log(this.formGroup.value);
-  }
-
-  goToResults() {
-    this.router.navigate(['results']);
   }
 }

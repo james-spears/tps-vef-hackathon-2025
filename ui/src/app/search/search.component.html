@@ -1,26 +1,49 @@
+
 <form [formGroup]="formGroup">
-  <div [class]="'lex-input-group'">
-    <input
-      #input
-      class="search-input"
-      [placeholder]="''"
-      [attr.type]="'text'"
-      formControlName="search"
-      title
-    />
+  <div class="relative">
+      <div class="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
+          <svg class="w-4 h-4 search-icon" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20">
+              <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m19 19-4-4m0-7A7 7 0 1 1 1 8a7 7 0 0 1 14 0Z"/>
+          </svg>
+      </div>
+      <input type="search" formControlName="search" id="default-search" class="search-input block w-full p-4 ps-10 text-sm text-gray-900 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="How can we help you?" required />
   </div>
 </form>
 
+
 @let results = results$ | async;
 
-@if (results && !loading()) {
-  <div class="dropdown-results">
+@if ((results && !loading())) {
+  <div class="relative right-0 z-10 mt-2 block w-full origin-top-right divide-y divide-gray-100 rounded-md bg-white shadow-lg ring-1 ring-black/5 focus:outline-none" role="menu" aria-orientation="vertical" aria-labelledby="menu-button" tabindex="-1">
     @for (result of results; track result.title) {
-      <button class="search-result" (click)="goToResults()">{{ result.title }}</button>
+      <div class="dropdown-menu-item py-1" role="none">
+        <svg class="w-4 h-4 search-icon-gray" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 20">
+          <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m19 19-4-4m0-7A7 7 0 1 1 1 8a7 7 0 0 1 14 0Z"/>
+      </svg>
+      <button class="search-result block w-full px-4 py-2 text-sm text-gray-700" role="menuitem" tabindex="-1" id="menu-item-0">{{ result.title }}</button>
+    </div>
     }
   </div>
-} @else if (loading()) {
-  <p>Loading...</p>
-} @else {
-  <p>Error</p>
 }
+
+<div class="results-content">
+<div class="ai-overview w-full">
+<span class="ai-overview-title">&#10024; AI Summary</span>
+<span class="ai-overview-gen-ans">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+</span>
+</div>
+
+<hr class="solid">
+
+
+@let articles = article$ | async;
+
+@if ((articles && !loading())) {
+  @for (article of articles; track article.title) {
+<div class="article">
+<a class="article-link">{{ article.title }}</a>
+<span class="article-desc">{{ article.description }}</span>
+</div>
+  }
+}
+</div>
