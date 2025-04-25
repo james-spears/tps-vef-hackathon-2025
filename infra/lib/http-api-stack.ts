@@ -31,9 +31,28 @@ export class HttpApiStack extends cdk.Stack {
       value: this.httpApi.url ?? '',
     });
 
-    const environment: Record<string, string> = {};
+    const environment: Record<string, string> = {
+      'REDEPLOY': '1'
+    };
     let embeddingModelPolicy: iam.PolicyStatement | undefined;
     let textModelPolicy: iam.PolicyStatement | undefined;
+    let knowledgeBasePolicy: iam.PolicyStatement | undefined;
+
+    const kb = genai.bedrock.VectorKnowledgeBase.fromKnowledgeBaseAttributes(this, 'KnowledgeBase', {
+      vectorStoreType: genai.bedrock.VectorStoreType.OPENSEARCH_SERVERLESS,
+      knowledgeBaseId: process.env.KB_ID ?? '',
+      executionRoleArn: process.env.KB_ROLE_ARN ?? ''
+    });
+
+    if (kb) {
+      knowledgeBasePolicy = new iam.PolicyStatement({
+        effect: iam.Effect.ALLOW,
+        actions: ['bedrock:*'],
+        resources: [kb.knowledgeBaseArn],
+      });
+      environment.AWS_BEDROCK_KNOWLEDGE_BASE_ID = kb.knowledgeBaseId;
+      environment.AWS_BEDROCK_KNOWLEDGE_BASE_ARN = kb.knowledgeBaseArn;
+    }
 
     if (props.embeddingModel) {
       embeddingModelPolicy = new iam.PolicyStatement({
@@ -41,8 +60,8 @@ export class HttpApiStack extends cdk.Stack {
         actions: ['bedrock:*'],
         resources: [props.embeddingModel.modelArn],
       });
-      environment.EMBEDDING_MODEL_ID = props.embeddingModel.modelId;
-      environment.EMBEDDING_MODEL_ARN = props.embeddingModel.modelArn;
+      environment.AWS_BEDROCK_EMBEDDING_MODEL_ID = props.embeddingModel.modelId;
+      environment.AWS_BEDROCK_EMBEDDING_MODEL_ARN = props.embeddingModel.modelArn;
     }
 
     if (props.textModel) {
@@ -51,8 +70,8 @@ export class HttpApiStack extends cdk.Stack {
         actions: ['bedrock:*'],
         resources: [props.textModel.modelArn],
       });
-      environment.TEXT_MODEL_ID = props.textModel.modelId;
-      environment.TEXT_MODEL_ARN = props.textModel.modelArn;
+      environment.AWS_BEDROCK_TEXT_MODEL_ID = props.textModel.modelId;
+      environment.AWS_BEDROCK_TEXT_MODEL_ARN = props.textModel.modelArn;
     }
 
     const autocompleteHandler = new lambda.Function(
@@ -72,6 +91,7 @@ export class HttpApiStack extends cdk.Stack {
 
     if (embeddingModelPolicy) autocompleteHandler.addToRolePolicy(embeddingModelPolicy);
     if (textModelPolicy) autocompleteHandler.addToRolePolicy(textModelPolicy);
+    if (knowledgeBasePolicy) autocompleteHandler.addToRolePolicy(knowledgeBasePolicy);
 
     new apigatewayv2.HttpRoute(this, 'AutocompleteRoute', {
       httpApi: this.httpApi,
@@ -98,11 +118,12 @@ export class HttpApiStack extends cdk.Stack {
 
     if (embeddingModelPolicy) queryHandler.addToRolePolicy(embeddingModelPolicy);
     if (textModelPolicy) queryHandler.addToRolePolicy(textModelPolicy);
+    if (knowledgeBasePolicy) queryHandler.addToRolePolicy(knowledgeBasePolicy);
 
     new apigatewayv2.HttpRoute(this, 'QueryRoute', {
       httpApi: this.httpApi,
       routeKey: apigatewayv2.HttpRouteKey.with(
-        '/api/v1/Query',
+        '/api/v1/query',
         apigatewayv2.HttpMethod.POST
       ),
       integration: new apigatewayv2Integrations.HttpLambdaIntegration(

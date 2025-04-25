@@ -11,7 +11,7 @@ export class TextModelStack extends cdk.Stack {
 
     this.textModel =
       genai.bedrock.BedrockFoundationModel.fromCdkFoundationModelId(
-        FoundationModelIdentifier.ANTHROPIC_CLAUDE_3_7_SONNET_20250219_V1_0,
+        FoundationModelIdentifier.AMAZON_NOVA_PRO_V1_0,
         {
           supportsAgents: true,
           supportsKnowledgeBase: true,

@@ -16,6 +16,9 @@ export default [
       }),
       typescript({ sourceMap: true }),
     ],
+    external: [
+      '@aws-sdk/client-bedrock-agent-runtime',
+    ]
   },
   {
     input: 'src/query.ts',
@@ -31,5 +34,8 @@ export default [
       }),
       typescript({ sourceMap: true }),
     ],
+    external: [
+      '@aws-sdk/client-bedrock-agent-runtime',
+    ]
   },
 ];
