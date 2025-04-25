@@ -1,13 +1,13 @@
 import resolve from '@rollup/plugin-node-resolve';
 import typescript from '@rollup/plugin-typescript';
-import terser from '@rollup/plugin-terser';
 
 export default [
   {
     input: 'src/autocomplete.ts',
     output: {
-      file: './dist/autocomplete.mjs',
-      format: 'esm',
+      file: './dist/autocomplete.cjs',
+      format: 'cjs',
+      exports: 'named',
       sourcemap: true,
     },
     plugins: [
@@ -15,14 +15,14 @@ export default [
         extensions: ['.ts'],
       }),
       typescript({ sourceMap: true }),
-      terser(),
     ],
   },
   {
     input: 'src/query.ts',
     output: {
-      file: './dist/query.mjs',
-      format: 'esm',
+      file: './dist/query.cjs',
+      format: 'cjs',
+      exports: 'named',
       sourcemap: true,
     },
     plugins: [
@@ -30,7 +30,6 @@ export default [
         extensions: ['.ts'],
       }),
       typescript({ sourceMap: true }),
-      terser(),
     ],
   },
 ];

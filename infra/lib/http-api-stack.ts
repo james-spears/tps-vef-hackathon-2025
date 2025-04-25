@@ -3,13 +3,23 @@ import { Construct } from 'constructs';
 import * as apigatewayv2 from 'aws-cdk-lib/aws-apigatewayv2';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
 import * as apigatewayv2Integrations from 'aws-cdk-lib/aws-apigatewayv2-integrations';
-
+import * as genai from '@cdklabs/generative-ai-cdk-constructs';
+import * as iam from 'aws-cdk-lib/aws-iam';
 
 export class HttpApiStack extends cdk.Stack {
-  constructor(scope: Construct, id: string) {
+  httpApi: apigatewayv2.HttpApi;
+
+  constructor(
+    scope: Construct,
+    id: string,
+    props: {
+      textModel?: genai.bedrock.BedrockFoundationModel;
+      embeddingModel?: genai.bedrock.BedrockFoundationModel;
+    }
+  ) {
     super(scope, id);
 
-    const httpApi = new apigatewayv2.HttpApi(this, 'HttpApi', {
+    this.httpApi = new apigatewayv2.HttpApi(this, 'HttpApi', {
       description: 'Public web API.',
       corsPreflight: {
         allowOrigins: ['*'],
@@ -18,8 +28,32 @@ export class HttpApiStack extends cdk.Stack {
     });
 
     new cdk.CfnOutput(this, 'HttpApiUrl', {
-      value: httpApi.url ?? '',
+      value: this.httpApi.url ?? '',
     });
+
+    const environment: Record<string, string> = {};
+    let embeddingModelPolicy: iam.PolicyStatement | undefined;
+    let textModelPolicy: iam.PolicyStatement | undefined;
+
+    if (props.embeddingModel) {
+      embeddingModelPolicy = new iam.PolicyStatement({
+        effect: iam.Effect.ALLOW,
+        actions: ['bedrock:*'],
+        resources: [props.embeddingModel.modelArn],
+      });
+      environment.EMBEDDING_MODEL_ID = props.embeddingModel.modelId;
+      environment.EMBEDDING_MODEL_ARN = props.embeddingModel.modelArn;
+    }
+
+    if (props.textModel) {
+      textModelPolicy = new iam.PolicyStatement({
+        effect: iam.Effect.ALLOW,
+        actions: ['bedrock:*'],
+        resources: [props.textModel.modelArn],
+      });
+      environment.TEXT_MODEL_ID = props.textModel.modelId;
+      environment.TEXT_MODEL_ARN = props.textModel.modelArn;
+    }
 
     const autocompleteHandler = new lambda.Function(
       this,
@@ -32,11 +66,15 @@ export class HttpApiStack extends cdk.Stack {
         runtime: lambda.Runtime.NODEJS_22_X,
         architecture: lambda.Architecture.ARM_64,
         timeout: cdk.Duration.seconds(100),
+        environment,
       }
     );
 
+    if (embeddingModelPolicy) autocompleteHandler.addToRolePolicy(embeddingModelPolicy);
+    if (textModelPolicy) autocompleteHandler.addToRolePolicy(textModelPolicy);
+
     new apigatewayv2.HttpRoute(this, 'AutocompleteRoute', {
-      httpApi: httpApi,
+      httpApi: this.httpApi,
       routeKey: apigatewayv2.HttpRouteKey.with(
         '/api/v1/autocomplete',
         apigatewayv2.HttpMethod.POST
@@ -55,10 +93,14 @@ export class HttpApiStack extends cdk.Stack {
       runtime: lambda.Runtime.NODEJS_22_X,
       architecture: lambda.Architecture.ARM_64,
       timeout: cdk.Duration.seconds(100),
+      environment,
     });
 
+    if (embeddingModelPolicy) queryHandler.addToRolePolicy(embeddingModelPolicy);
+    if (textModelPolicy) queryHandler.addToRolePolicy(textModelPolicy);
+
     new apigatewayv2.HttpRoute(this, 'QueryRoute', {
-      httpApi: httpApi,
+      httpApi: this.httpApi,
       routeKey: apigatewayv2.HttpRouteKey.with(
         '/api/v1/Query',
         apigatewayv2.HttpMethod.POST
