@@ -1,12 +1,11 @@
-import { ChangeDetectorRef, Component, inject } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { FormBuilder, FormControl, ReactiveFormsModule } from '@angular/forms';
 import {
+  catchError,
   debounceTime,
-  delay,
-  filter,
   map,
-  mergeMap,
   Observable,
+  of,
   switchMap,
   tap,
 } from 'rxjs';
@@ -33,25 +32,37 @@ export class SearchComponent {
   menuOpen = false;
   loading = false;
   submitted = false;
-  private changeDeterctorRef = inject(ChangeDetectorRef);
+  error = false;
+  cachedResults: Result[] = [];
 
   results$: Observable<Result[]> = this.formGroup.valueChanges.pipe(
     tap(() => {
       console.log('change');
       this.loading = true;
       this.submitted = false;
+      this.error = false;
       this.response$ = undefined;
     }),
     debounceTime(300),
     map((value) => value.search),
-    switchMap((text) => this.queryService.autocomplete(text ?? '')),
-    tap(() => {
+    switchMap((text) =>
+      this.queryService.autocomplete(text ?? '').pipe(catchError(() => {
+        if (this.cachedResults.length > 0) {
+          return of(this.cachedResults);
+        } else {
+          this.error = true;
+          return of([]);
+        }
+      })),
+    ),
+    tap((results) => {
+      this.cachedResults = results;
       this.menuOpen = true;
       this.loading = false;
     }),
   );
 
-  response$: Observable<GeneratedResponse> | undefined;
+  response$: Observable<string[]> | undefined;
 
   onSubmit() {
     console.log(this.formGroup.value);
@@ -61,6 +72,7 @@ export class SearchComponent {
       this.response$ = this.queryService
         .query(this.formGroup.value.search)
         .pipe(
+          map((response) => response.text.split('\n')),
           tap(() => {
             this.menuOpen = true;
             this.loading = false;

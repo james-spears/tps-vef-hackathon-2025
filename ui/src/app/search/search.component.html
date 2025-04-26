@@ -25,14 +25,16 @@
         formControlName="search"
         id="default-search"
         class="search-input block w-full p-4 ps-10 text-sm text-gray-900 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-        placeholder="How can we help you?"
+        placeholder="Enter a search term to find what you need"
         required
       />
     </div>
   </form>
   @let results = results$ | async;
   @let response = response$ | async;
-  @if (loading) {
+  @if (error) {
+    <p class="m-8">Hmm, 🤔 nothing in our knowledge base matches close enough. Try rephrasing your query 😉.</p>
+  } @else if (loading && (!results || submitted)) {
     <div class="w-[100%] mt-4 flex justify-center" role="status">
       <svg
         aria-hidden="true"
@@ -79,7 +81,7 @@
               />
             </svg>
             <button
-              class="search-result block w-full px-4 py-2 text-sm text-gray-700"
+              class="hover:cursor-pointer search-result block w-full px-4 py-2 text-sm text-gray-700"
               role="menuitem"
               tabindex="-1"
               id="menu-item-0"
@@ -101,7 +103,12 @@
       <div class="results-content">
         <div class="ai-overview w-full">
           <span class="ai-overview-title">&#10024; AI Summary</span>
-          <span class="ai-overview-gen-ans">{{ response.text }}</span>
+          <div class="ai-overview-gen-ans pt-8">
+            @for (p of response; track $index) {
+              <p>{{ p }}</p>
+              <br>
+            }
+          </div>
         </div>
       </div>
     }

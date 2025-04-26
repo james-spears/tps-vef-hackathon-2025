@@ -47,9 +47,9 @@ export class QueryService {
       return this.httpClient.post<GeneratedResponse>(`/api/v1/query`, { text });
     } else {
       return of({
-        text: `Lorem ipsum dolor sit amet consectetur adipisicing elit. Ipsam ad saepe quia quod sequi voluptates, eveniet deserunt accusantium a atque! Numquam ratione aut, eos neque deleniti aperiam voluptas. Autem, saepe!
-        Fugit aperiam debitis consequuntur quos ut rem, exercitationem non ipsum assumenda suscipit eius sed architecto veniam quidem quia labore laboriosam! Magni facilis eveniet impedit tenetur, quod eaque harum veritatis et.
-        Explicabo molestiae nisi blanditiis velit quas ducimus error repellendus, voluptate delectus hic vero sed tenetur praesentium laboriosam neque quo modi unde animi qui impedit expedita, fuga doloremque nihil. Dolores, sit!
+        text: `Lorem ipsum dolor sit amet consectetur adipisicing elit.\n Ipsam ad saepe quia quod sequi voluptates, eveniet deserunt accusantium a atque! Numquam ratione aut, eos neque deleniti aperiam voluptas. Autem, saepe!
+        Fugit aperiam debitis consequuntur quos ut rem, exercitationem non ipsum assumenda suscipit eius sed architecto veniam quidem quia labore laboriosam!\n Magni facilis eveniet impedit tenetur, quod eaque harum veritatis et.
+        Explicabo molestiae nisi blanditiis velit quas ducimus error repellendus, voluptate delectus hic vero sed tenetur praesentium laboriosam neque quo modi unde animi qui impedit expedita, fuga doloremque nihil.\n Dolores, sit!
     `,
       }).pipe(delay(1000));
     }
