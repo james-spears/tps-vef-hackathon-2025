@@ -21,11 +21,19 @@
         </svg>
       </div>
       <input
+        #searchInput
         type="search"
         formControlName="search"
         id="default-search"
         class="search-input block w-full p-4 ps-10 text-sm text-gray-900 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
         placeholder="Enter a search term to find what you need"
+        (keydown.enter)="
+        formGroup.patchValue(
+          { search: searchInput.value },
+          { emitEvent: false }
+        );
+        onSubmit()
+      "
         required
       />
     </div>
